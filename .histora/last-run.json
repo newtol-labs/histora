@@ -1,0 +1,105 @@
+{
+  "startedAt": "2026-06-10T07:30:51.211Z",
+  "finishedAt": "2026-06-10T07:30:56.901Z",
+  "status": "ok",
+  "summary": {
+    "startedAt": "2026-06-10T07:30:51.211Z",
+    "channels": [
+      {
+        "id": "codex",
+        "label": "Codex",
+        "enabled": true,
+        "adapter": "codex-jsonl",
+        "source": "~/.codex/sessions",
+        "discovered": 39,
+        "created": 0,
+        "updated": 0,
+        "skipped": 39,
+        "failed": 0,
+        "errors": [],
+        "status": "ok"
+      },
+      {
+        "id": "claude-code",
+        "label": "Claude Code",
+        "enabled": true,
+        "adapter": "claude-jsonl",
+        "source": "~/.claude/projects",
+        "discovered": 22,
+        "created": 0,
+        "updated": 0,
+        "skipped": 22,
+        "failed": 0,
+        "errors": [],
+        "status": "ok"
+      },
+      {
+        "id": "opencode",
+        "label": "OpenCode",
+        "enabled": true,
+        "adapter": "opencode-sqlite",
+        "source": "~/.local/share/opencode/opencode.db",
+        "discovered": 41,
+        "created": 0,
+        "updated": 0,
+        "skipped": 41,
+        "failed": 0,
+        "errors": [],
+        "status": "ok"
+      },
+      {
+        "id": "gemini-cli",
+        "label": "Gemini CLI",
+        "enabled": true,
+        "adapter": "gemini-json",
+        "source": "~/.gemini/sessions",
+        "discovered": 0,
+        "created": 0,
+        "updated": 0,
+        "skipped": 0,
+        "failed": 0,
+        "errors": [
+          "Source not found: ~/.gemini/sessions"
+        ],
+        "status": "missing_source"
+      },
+      {
+        "id": "openclaw",
+        "label": "OpenClaw",
+        "enabled": true,
+        "adapter": "openclaw-json",
+        "source": "~/.openclaw/sessions",
+        "discovered": 0,
+        "created": 0,
+        "updated": 0,
+        "skipped": 0,
+        "failed": 0,
+        "errors": [
+          "Source not found: ~/.openclaw/sessions"
+        ],
+        "status": "missing_source"
+      },
+      {
+        "id": "hermes-agent",
+        "label": "Hermes Agent",
+        "enabled": true,
+        "adapter": "hermes-sqlite",
+        "source": "~/.hermes/state.db",
+        "discovered": 2,
+        "created": 0,
+        "updated": 0,
+        "skipped": 2,
+        "failed": 0,
+        "errors": [],
+        "status": "ok"
+      }
+    ],
+    "totals": {
+      "discovered": 104,
+      "created": 0,
+      "updated": 0,
+      "skipped": 104,
+      "failed": 0
+    }
+  }
+}

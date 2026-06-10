@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Histora</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-logo" src="/assets/histora-logo.png" alt="Histora logo" />
+          <div>
+            <h1>Histora</h1>
+            <p>对话同步 / Session Sync</p>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Main">
+          <button class="nav-item active" data-view="dashboard">仪表盘 / Dashboard</button>
+          <button class="nav-item" data-view="channels">渠道 / Channels</button>
+          <button class="nav-item" data-view="sessions">会话 / Sessions</button>
+          <button class="nav-item" data-view="settings">设置 / Settings</button>
+          <button class="nav-item" data-view="logs">日志 / Logs</button>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">本地工作区 / Local workspace</p>
+            <h2 id="page-title">仪表盘 / Dashboard</h2>
+          </div>
+          <div class="actions">
+            <button id="open-folder" class="button secondary">打开文件夹 / Open Folder</button>
+            <button id="sync-now" class="button primary">立即同步 / Sync Now</button>
+          </div>
+        </header>
+
+        <section id="status-strip" class="status-strip"></section>
+
+        <section id="dashboard" class="view active">
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>同步概览 / Sync Summary</h3>
+                <span id="last-sync" class="muted">尚未同步 / Not synced yet</span>
+              </div>
+              <div id="summary-metrics" class="metrics"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>渠道状态 / Channel Health</h3>
+                <span id="schedule" class="muted"></span>
+              </div>
+              <div id="channel-health" class="channel-health"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="channels" class="view">
+          <div class="stack">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>渠道 / Channels</h3>
+                <span class="muted">已配置来源与适配器 / Configured sources and adapters</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>渠道 / Channel</th>
+                      <th>客户端 / Client</th>
+                      <th>适配器 / Adapter</th>
+                      <th>来源 / Source</th>
+                      <th>状态 / Status</th>
+                      <th>会话 / Sessions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="channels-table"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h3>Agent 探测 / Agent Discovery</h3>
+                <span class="muted">启动时检查命令、App 与数据路径 / Commands, apps, and data paths checked on startup</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>安装 / Installed</th>
+                      <th>命令或 App / Command or App</th>
+                      <th>数据路径 / Data Source</th>
+                      <th>同步 / Sync</th>
+                      <th>说明 / Note</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agent-discovery-table"></tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section id="sessions" class="view">
+          <section class="panel">
+            <div class="panel-header filters">
+              <div>
+                <h3>会话 / Sessions</h3>
+                <span class="muted">最新同步的 Markdown 文件 / Latest synced Markdown files</span>
+              </div>
+              <div class="filter-row">
+                <input id="session-search" type="search" placeholder="搜索会话 / Search sessions" autocomplete="off" />
+                <select id="channel-filter"></select>
+                <select id="project-filter"></select>
+              </div>
+            </div>
+            <div class="session-count-row">
+              <span id="session-count" class="muted"></span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>更新时间 / Updated</th>
+                    <th>渠道 / Channel</th>
+                    <th>项目 / Project</th>
+                    <th>标题 / Title</th>
+                    <th>版本 / Version</th>
+                    <th>消息 / Messages</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="sessions-table"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section id="settings" class="view">
+          <div class="grid two">
+            <section class="panel">
+              <div class="panel-header">
+                <h3>自动备份 / Auto Backup</h3>
+                <span class="muted">系统计划任务 / System Scheduler</span>
+              </div>
+              <form id="schedule-form" class="settings-form">
+                <label>
+                  <span>模式 / Mode</span>
+                  <select id="cadence-select">
+                    <option value="interval">按间隔自动同步 / Sync by interval</option>
+                    <option value="daily">每天固定时间 / Daily at fixed time</option>
+                  </select>
+                </label>
+                <label id="interval-field">
+                  <span>间隔分钟 / Interval minutes</span>
+                  <input id="interval-minutes" type="number" min="1" max="1439" step="1" value="60" inputmode="numeric" />
+                </label>
+                <label id="daily-time-field">
+                  <span>每日时间 / Daily time</span>
+                  <input id="schedule-time" type="time" value="23:00" />
+                </label>
+                <button id="save-schedule" class="button primary full" type="submit">保存并应用 / Save & Apply</button>
+              </form>
+              <dl class="settings-list">
+                <div>
+                  <dt>当前计划 / Current plan</dt>
+                  <dd id="settings-schedule"></dd>
+                </div>
+                <div>
+                  <dt>工作区 / Workspace</dt>
+                  <dd id="settings-workspace"></dd>
+                </div>
+                <div>
+                  <dt>脱敏 / Redaction</dt>
+                  <dd id="settings-redaction"></dd>
+                </div>
+              </dl>
+              <button id="install-launchd" class="button secondary full">重新安装系统任务 / Reinstall System Task</button>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <h3>后续适配器 / Next Adapters</h3>
+                <span class="muted">等待确认来源格式 / Waiting for source format</span>
+              </div>
+              <div id="disabled-channels" class="channel-health"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="logs" class="view">
+          <section class="panel">
+            <div class="panel-header">
+              <h3>日志 / Logs</h3>
+              <span class="muted">最近 120 行 / Last 120 lines</span>
+            </div>
+            <pre id="log-output" class="logs"></pre>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

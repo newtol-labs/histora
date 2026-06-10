@@ -1,0 +1,64 @@
+{
+  "name": "histora",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "author": "Jet",
+  "description": "Local GUI and sync agent for AI conversation sessions.",
+  "main": "src/desktop-main.mjs",
+  "bin": {
+    "histora": "./src/cli.mjs",
+    "chathub": "./src/cli.mjs"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "serve": "node src/server.mjs",
+    "desktop": "electron .",
+    "sync": "node src/cli.mjs sync",
+    "status": "node src/cli.mjs status",
+    "doctor": "node src/cli.mjs doctor",
+    "install-launchd": "node src/cli.mjs install-launchd",
+    "test": "node src/test.mjs",
+    "pack:mac": "electron-builder --mac dir",
+    "pack:win": "electron-builder --win dir --x64",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win --x64"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.jet.histora",
+    "productName": "Histora",
+    "files": [
+      "package.json",
+      "src/**/*",
+      "public/**/*",
+      "build/**/*",
+      "README.md",
+      "histora.config.yaml"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "directories": {
+      "output": "release"
+    }
+  }
+}

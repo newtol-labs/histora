@@ -1,0 +1,46 @@
+workspace: ""
+
+sync:
+  schedule: "23:00"
+  cadence: interval
+  interval_minutes: 30
+  timezone: Asia/Shanghai
+  redact: true
+
+channels:
+  - id: codex
+    label: Codex
+    client: CLI/Desktop
+    adapter: codex-jsonl
+    source: ~/.codex/sessions
+    enabled: true
+  - id: claude-code
+    label: "Claude Code"
+    client: CLI
+    adapter: claude-jsonl
+    source: ~/.claude/projects
+    enabled: true
+  - id: opencode
+    label: OpenCode
+    client: CLI
+    adapter: opencode-sqlite
+    source: ~/.local/share/opencode/opencode.db
+    enabled: true
+  - id: gemini-cli
+    label: "Gemini CLI"
+    client: CLI
+    adapter: gemini-json
+    source: ~/.gemini/sessions
+    enabled: true
+  - id: openclaw
+    label: OpenClaw
+    client: CLI
+    adapter: openclaw-json
+    source: ~/.openclaw/sessions
+    enabled: true
+  - id: hermes-agent
+    label: "Hermes Agent"
+    client: CLI/Desktop
+    adapter: hermes-sqlite
+    source: ~/.hermes/state.db
+    enabled: true

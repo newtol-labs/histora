@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+release/
+dist/
+
+# Electron builder cache
+.electron-builder-cache/
+
+# Local sync data (user-specific, not for repo)
+channels/
+_index.md
+
+# Local config overrides (contains user workspace path)
+# histora.config.yaml is included as a template — workspace will be blank
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Env
+.env
+.env.local
+
+# npm
+package-lock.json
