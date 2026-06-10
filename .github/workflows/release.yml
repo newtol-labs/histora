@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*'
 
 permissions:
   contents: write
@@ -13,60 +13,106 @@ jobs:
     name: Build macOS
     runs-on: macos-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Build macOS (DMG + ZIP)
+      - name: Build macOS (dmg + zip)
         run: npm run dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Code signing (optional — remove if not signing)
+          # CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
+          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
 
       - name: Upload macOS artifacts
-        uses: softprops/action-gh-release@v2
+        uses: actions/upload-artifact@v4
         with:
-          files: |
+          name: mac-release
+          path: |
             release/*.dmg
             release/*.zip
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
+            release/latest-mac.yml
+          if-no-files-found: error
 
   build-win:
     name: Build Windows
     runs-on: windows-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Build Windows (NSIS + portable)
+      - name: Build Windows (nsis + portable)
         run: npm run dist:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-release
+          path: |
+            release/*.exe
+            release/latest.yml
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: [build-mac, build-win]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: mac-release
+          path: release/mac
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: win-release
+          path: release/win
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: Histora ${{ github.ref_name }}
+          body: |
+            ## Histora ${{ github.ref_name }}
+
+            ### Downloads
+            | Platform | File | Notes |
+            |---|---|---|
+            | macOS | `*.dmg` | Drag to Applications |
+            | macOS | `*.zip` | Manual install |
+            | Windows | `*-Setup.exe` | NSIS installer |
+            | Windows | `*-Portable.exe` | No install needed |
+
+            ### Install (macOS via Homebrew cask — coming soon)
+            ```bash
+            # Manual: download the .dmg above
+            ```
           files: |
-            release/*.exe
-            release/*.msi
-            release/*.nsis.7z
+            release/mac/*.dmg
+            release/mac/*.zip
+            release/win/*.exe
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

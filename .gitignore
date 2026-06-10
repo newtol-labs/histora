@@ -43,4 +43,4 @@ ehthumbs.db
 .env.local
 
 # npm
-package-lock.json
+# package-lock.json is tracked for reproducible CI builds
