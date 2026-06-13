@@ -27,9 +27,80 @@ jobs:
         run: npm run dist:mac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Code signing (optional — remove if not signing)
-          # CSC_LINK: ${{ secrets.MAC_CERT_P12 }}
-          # CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Strip ad-hoc signatures and repack dmg
+        # Electron pre-built binaries carry an adhoc signature with
+        # Info.plist=not-bound. Gatekeeper treats such apps as "damaged"
+        # (cannot open at all). We must strip ALL signatures so the app
+        # shows "unknown developer" instead — users can bypass with
+        # right-click → Open, or: xattr -cr /Applications/Histora.app
+        #
+        # electron-builder re-runs packaging when called a second time, so
+        # we must post-process the already-built dmg: mount → strip → repack.
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          DMG="release/Histora-${VERSION}-arm64.dmg"
+          ZIP="release/Histora-${VERSION}-arm64-mac.zip"
+          WORK="$(mktemp -d)"
+
+          echo "→ Mounting $DMG"
+          hdiutil attach "$DMG" -nobrowse -mountpoint "$WORK/mnt" -quiet
+
+          echo "→ Copying app"
+          ditto "$WORK/mnt/Histora.app" "$WORK/Histora.app"
+          hdiutil detach "$WORK/mnt" -quiet
+
+          echo "→ Stripping signatures"
+          find "$WORK/Histora.app" \( \
+            -name "*.app" -o -name "*.dylib" -o \
+            -name "*.so"  -o -name "*.node"  -o \
+            -name "Histora" -o -name "Electron*" \) \
+            | while read f; do
+                codesign --remove-signature "$f" 2>/dev/null || true
+              done
+
+          echo "→ Repacking dmg"
+          rm -f "$DMG"
+          hdiutil create \
+            -volname "Histora ${VERSION}-arm64" \
+            -srcfolder "$WORK/Histora.app" \
+            -ov -format UDZO \
+            "$DMG"
+
+          echo "→ Repacking zip"
+          rm -f "$ZIP"
+          ditto -c -k --sequesterRsrc --keepParent "$WORK/Histora.app" "$ZIP"
+
+          rm -rf "$WORK"
+          echo "→ Regenerating latest-mac.yml with correct checksums"
+          DMG_SIZE=$(stat -f%z "$DMG")
+          ZIP_SIZE=$(stat -f%z "$ZIP")
+          DMG_SHA=$(openssl dgst -sha512 -binary "$DMG" | base64)
+          ZIP_SHA=$(openssl dgst -sha512 -binary "$ZIP" | base64)
+          DMG_NAME=$(basename "$DMG")
+          ZIP_NAME=$(basename "$ZIP")
+          RELEASE_DATE=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+
+          {
+            printf 'version: %s\n' "$VERSION"
+            printf 'files:\n'
+            printf '  - url: %s\n' "$ZIP_NAME"
+            printf '    sha512: %s\n' "$ZIP_SHA"
+            printf '    size: %s\n' "$ZIP_SIZE"
+            printf '  - url: %s\n' "$DMG_NAME"
+            printf '    sha512: %s\n' "$DMG_SHA"
+            printf '    size: %s\n' "$DMG_SIZE"
+            printf 'path: %s\n' "$ZIP_NAME"
+            printf 'sha512: %s\n' "$ZIP_SHA"
+            printf "releaseDate: '%s'\n" "$RELEASE_DATE"
+          } > release/latest-mac.yml
+
+          echo "Done. Artifacts:"
+          ls -lh "$DMG" "$ZIP"
+          echo "latest-mac.yml:"
+          cat release/latest-mac.yml
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -100,15 +171,23 @@ jobs:
             ### Downloads
             | Platform | File | Notes |
             |---|---|---|
-            | macOS | `*.dmg` | Drag to Applications |
-            | macOS | `*.zip` | Manual install |
+            | macOS | `*-arm64.dmg` | Apple Silicon (M1/M2/M3/M4) |
+            | macOS | `*-arm64-mac.zip` | Apple Silicon zip |
             | Windows | `*-Setup.exe` | NSIS installer |
             | Windows | `*-Portable.exe` | No install needed |
 
-            ### Install (macOS via Homebrew cask — coming soon)
+            ### macOS 首次打开 / First Launch on macOS
+
+            本应用暂未进行 Apple 公证（Notarization），首次打开需手动授权：
+
+            **方法一（推荐）：** 右键点击 Histora.app → 选择「打开」→ 在弹出对话框中点击「打开」
+
+            **方法二（终端）：**
             ```bash
-            # Manual: download the .dmg above
+            xattr -cr /Applications/Histora.app
             ```
+
+            > This app is not yet notarized by Apple. On first launch, right-click → Open, then click Open in the dialog.
           files: |
             release/mac/*.dmg
             release/mac/*.zip

@@ -1,6 +1,6 @@
 {
   "name": "histora",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "author": "Jet",
@@ -53,6 +53,9 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
       "target": [
         "dmg",
         "zip"
