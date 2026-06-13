@@ -38,6 +38,7 @@ jobs:
           path: |
             release/*.dmg
             release/*.zip
+            release/*.blockmap
             release/latest-mac.yml
           if-no-files-found: error
 
@@ -66,6 +67,7 @@ jobs:
           name: win-release
           path: |
             release/*.exe
+            release/*.blockmap
             release/latest.yml
           if-no-files-found: error
 
@@ -110,7 +112,11 @@ jobs:
           files: |
             release/mac/*.dmg
             release/mac/*.zip
+            release/mac/*.blockmap
+            release/mac/latest-mac.yml
             release/win/*.exe
+            release/win/*.blockmap
+            release/win/latest.yml
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           generate_release_notes: true

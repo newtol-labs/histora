@@ -30,7 +30,10 @@ const els = {
   disabledChannels: document.querySelector("#disabled-channels"),
   installLaunchd: document.querySelector("#install-launchd"),
   logOutput: document.querySelector("#log-output"),
-  toast: document.querySelector("#toast")
+  toast: document.querySelector("#toast"),
+  appVersion: document.querySelector("#app-version"),
+  checkUpdate: document.querySelector("#check-update"),
+  updateStatus: document.querySelector("#update-status")
 };
 
 document.querySelectorAll(".nav-item").forEach((button) => {
@@ -45,8 +48,10 @@ els.cadenceSelect.addEventListener("change", updateScheduleControls);
 els.channelFilter.addEventListener("change", renderSessions);
 els.projectFilter.addEventListener("change", renderSessions);
 els.sessionSearch.addEventListener("input", renderSessions);
+els.checkUpdate.addEventListener("click", checkForUpdates);
 
 await refresh();
+startUpdatePolling();
 
 async function refresh() {
   state = await getJson("/api/status");
@@ -63,6 +68,7 @@ function setView(view) {
 }
 
 function renderAll() {
+  renderVersion();
   renderStatusStrip();
   renderDashboard();
   renderChannels();
@@ -70,6 +76,10 @@ function renderAll() {
   renderFilters();
   renderSessions();
   renderSettings();
+}
+
+function renderVersion() {
+  if (state?.version) els.appVersion.textContent = `v${state.version}`;
 }
 
 function renderStatusStrip() {
@@ -217,6 +227,88 @@ function renderSettings() {
 async function loadLogs() {
   const data = await getJson("/api/logs");
   els.logOutput.textContent = data.logs || "暂无日志 / No logs yet.";
+}
+
+async function checkForUpdates() {
+  setUpdateStatus("检查更新中 / Checking…", "active");
+  try {
+    const result = await postJson("/api/check-update", {});
+    if (!result.supported) {
+      setUpdateStatus("当前为开发模式 / Dev mode", "");
+      return;
+    }
+    if (result.error) {
+      setUpdateStatus(`检查失败 / Failed: ${result.error}`, "error");
+      return;
+    }
+    // result reflects the latest known updater state; polling will refine it
+    applyUpdateState(result);
+  } catch (error) {
+    setUpdateStatus(`检查失败 / Failed: ${error.message}`, "error");
+  }
+}
+
+let updatePollTimer = null;
+
+function startUpdatePolling() {
+  // Poll the updater state so background download/availability surfaces in UI.
+  const poll = async () => {
+    try {
+      const result = await getJson("/api/update-state");
+      if (result?.supported) applyUpdateState(result);
+    } catch {
+      // ignore transient errors
+    }
+  };
+  poll();
+  updatePollTimer = window.setInterval(poll, 15000);
+}
+
+function applyUpdateState(s) {
+  switch (s.status) {
+    case "checking":
+      setUpdateStatus("检查更新中 / Checking…", "active");
+      break;
+    case "available":
+      els.checkUpdate.classList.add("has-update");
+      setUpdateStatus(`发现新版本 / New: v${s.version}，下载中… / Downloading…`, "active");
+      break;
+    case "downloading":
+      els.checkUpdate.classList.add("has-update");
+      setUpdateStatus(`下载中 / Downloading ${Math.round(s.percent || 0)}%`, "active");
+      break;
+    case "downloaded":
+      els.checkUpdate.classList.add("has-update");
+      setUpdateStatus(`v${s.version} 已就绪，点击重启安装 / Ready — click to restart`, "active");
+      els.checkUpdate.onclick = confirmInstall;
+      break;
+    case "manual":
+      els.checkUpdate.classList.add("has-update");
+      setUpdateStatus(`发现新版本 v${s.version}，点击前往下载 / Click to download`, "active");
+      els.checkUpdate.onclick = () => postJson("/api/open-release", {});
+      break;
+    case "not-available":
+      els.checkUpdate.classList.remove("has-update");
+      setUpdateStatus("已是最新版本 / Up to date", "");
+      window.setTimeout(() => setUpdateStatus("", ""), 4000);
+      break;
+    case "error":
+      setUpdateStatus(`更新错误 / Error: ${s.error || ""}`, "error");
+      break;
+    default:
+      break;
+  }
+}
+
+async function confirmInstall() {
+  if (!window.confirm("立即重启并安装更新？/ Restart and install the update now?")) return;
+  await postJson("/api/install-update", {});
+}
+
+function setUpdateStatus(text, kind) {
+  els.updateStatus.textContent = text;
+  els.updateStatus.hidden = !text;
+  els.updateStatus.className = `update-status${kind ? ` ${kind}` : ""}`;
 }
 
 async function syncNow() {

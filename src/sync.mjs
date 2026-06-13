@@ -14,6 +14,7 @@ import {
   upsertSessionState
 } from "./state.mjs";
 import {
+  appVersion,
   displayPath,
   hashObject,
   isSyntheticMessageContent,
@@ -172,6 +173,7 @@ export function getStatus(root = process.cwd()) {
 
   return {
     root,
+    version: appVersion(),
     state,
     supportedAdapters: supportedAdapters(),
     config: {

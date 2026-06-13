@@ -5,6 +5,7 @@ import { CONFIG_FILE, LEGACY_CONFIG_FILE, renderConfig } from "./config.mjs";
 import { runSync } from "./sync.mjs";
 import { ensureDir } from "./utils.mjs";
 import { startServer } from "./server.mjs";
+import { createUpdater } from "./updater.mjs";
 
 const isSyncOnly = process.argv.includes("--histora-sync") || process.argv.includes("--chathub-sync");
 
@@ -19,6 +20,7 @@ if (isSyncOnly) {
 } else {
   let mainWindow = null;
   let serverHandle = null;
+  let updater = null;
 
   const openMainWindow = () => {
     if (!serverHandle) return null;
@@ -41,14 +43,17 @@ if (isSyncOnly) {
   app.whenReady().then(async () => {
     const workspaceRoot = resolveWorkspaceRoot();
     ensureDesktopWorkspace(workspaceRoot);
+    updater = createUpdater({ app, shell, isPackaged: app.isPackaged });
     serverHandle = await startServer({
       root: workspaceRoot,
       publicDir: path.join(app.getAppPath(), "public"),
-      port: 0
+      port: 0,
+      updater
     });
 
     openMainWindow();
-    setApplicationMenu(mainWindow, workspaceRoot);
+    setApplicationMenu(mainWindow, workspaceRoot, updater);
+    updater.autoCheck();
   });
 
   app.on("activate", () => {
@@ -115,7 +120,7 @@ function createWindow(url) {
   return window;
 }
 
-function setApplicationMenu(window, workspaceRoot) {
+function setApplicationMenu(window, workspaceRoot, updater) {
   const template = [
     {
       label: "Histora",
@@ -128,6 +133,10 @@ function setApplicationMenu(window, workspaceRoot) {
           label: "Reload / 重新载入",
           accelerator: "CmdOrCtrl+R",
           click: () => window.reload()
+        },
+        {
+          label: "Check for Updates / 检查更新",
+          click: () => updater?.check()
         },
         { type: "separator" },
         {

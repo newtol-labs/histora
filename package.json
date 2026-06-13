@@ -43,6 +43,13 @@
       "README.md",
       "histora.config.yaml"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "newtol-labs",
+        "repo": "histora"
+      }
+    ],
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
@@ -57,8 +64,15 @@
         "portable"
       ]
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
     "directories": {
       "output": "release"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

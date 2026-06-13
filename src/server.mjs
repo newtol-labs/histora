@@ -11,12 +11,13 @@ import { getStatus, readLogs, runSync } from "./sync.mjs";
 export function createChathubServer(options = {}) {
   const root = options.root || process.cwd();
   const publicDir = options.publicDir || path.join(root, "public");
+  const updater = options.updater || null;
 
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
       if (url.pathname.startsWith("/api/")) {
-        await handleApi(req, res, url, root);
+        await handleApi(req, res, url, root, updater);
         return;
       }
       serveStatic(res, url.pathname, publicDir);
@@ -45,9 +46,39 @@ export function startServer(options = {}) {
   });
 }
 
-async function handleApi(req, res, url, root) {
+async function handleApi(req, res, url, root, updater) {
   if (req.method === "GET" && url.pathname === "/api/status") {
     sendJson(res, 200, getStatus(root));
+    return;
+  }
+
+  if (url.pathname === "/api/update-state") {
+    sendJson(res, 200, updater ? updater.getState() : { supported: false });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/check-update") {
+    if (!updater) {
+      sendJson(res, 200, { supported: false });
+      return;
+    }
+    sendJson(res, 200, await updater.check());
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/install-update") {
+    if (!updater) {
+      sendJson(res, 200, { supported: false });
+      return;
+    }
+    updater.install();
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/open-release") {
+    if (updater) updater.openRelease();
+    sendJson(res, 200, { ok: true });
     return;
   }
 

@@ -2,8 +2,22 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export const ROOT = process.cwd();
+
+let cachedVersion = null;
+
+export function appVersion() {
+  if (cachedVersion) return cachedVersion;
+  try {
+    const pkgPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+    cachedVersion = JSON.parse(fs.readFileSync(pkgPath, "utf8")).version || "0.0.0";
+  } catch {
+    cachedVersion = "0.0.0";
+  }
+  return cachedVersion;
+}
 
 export function expandHome(input) {
   if (!input) return input;
