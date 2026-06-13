@@ -20,8 +20,20 @@ if (isSyncOnly) {
   let mainWindow = null;
   let serverHandle = null;
 
+  const openMainWindow = () => {
+    if (!serverHandle) return null;
+    mainWindow = createWindow(serverHandle.url);
+    mainWindow.on("closed", () => {
+      mainWindow = null;
+    });
+    return mainWindow;
+  };
+
   app.on("second-instance", () => {
-    if (!mainWindow) return;
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      openMainWindow();
+      return;
+    }
     if (mainWindow.isMinimized()) mainWindow.restore();
     mainWindow.focus();
   });
@@ -35,13 +47,13 @@ if (isSyncOnly) {
       port: 0
     });
 
-    mainWindow = createWindow(serverHandle.url);
+    openMainWindow();
     setApplicationMenu(mainWindow, workspaceRoot);
   });
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0 && serverHandle) {
-      mainWindow = createWindow(serverHandle.url);
+    if (BrowserWindow.getAllWindows().length === 0) {
+      openMainWindow();
     }
   });
 
