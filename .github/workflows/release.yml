@@ -64,12 +64,21 @@ jobs:
           PLIST="$APP/Contents/Info.plist"
           ASAR="$APP/Contents/Resources/app.asar"
 
-          # ── 3. Re-sign bottom-up: dylibs → EF internals → frameworks/helpers
-          #        → main binary → asar hash fix → top bundle ──────────────────
+          # ── 3. Re-sign bottom-up ──────────────────────────────────────────────
+          # CRITICAL: delete ALL old _CodeSignature dirs first. Otherwise
+          # `codesign --force` on a sub-bundle (Histora Helper.app etc.) leaves
+          # a stale/inconsistent CodeResources, and macOS 26 rejects it with
+          # "code has no resources but signature indicates they must be present"
+          # → app shows as "damaged" even though it launched fine on the build host.
+          echo "→ Removing old _CodeSignature dirs"
+          find "$APP" -name "_CodeSignature" -type d -print0 | while IFS= read -r -d '' d; do
+            rm -rf "$d"
+          done
+
           echo "→ Re-signing bottom-up"
 
           # a) All dylibs
-          find "$APP" -name "*.dylib" | while read f; do
+          find "$APP" -name "*.dylib" -print0 | while IFS= read -r -d '' f; do
             codesign --sign - --force "$f" 2>/dev/null || true
           done
 
@@ -77,17 +86,25 @@ jobs:
           EF_BIN="$APP/Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework"
           [ -f "$EF_BIN" ] && codesign --sign - --force "$EF_BIN" 2>/dev/null || true
 
-          # c) All .framework bundles and .app helpers (deepest path first)
-          find "$APP/Contents/Frameworks" \( -name "*.framework" -o -name "*.app" \) -print \
-            | awk '{ print length, $0 }' | sort -rn | awk '{print $2}' \
-            | while read f; do
+          # c) .framework bundles (deepest path first)
+          find "$APP/Contents/Frameworks" -name "*.framework" -print \
+            | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- \
+            | while IFS= read -r f; do
                 codesign --sign - --force "$f" 2>/dev/null || true
               done
 
-          # d) Main executable
+          # d) Helper .app bundles (deepest first) — sign AFTER frameworks so
+          #    each helper gets a fresh, complete CodeResources
+          find "$APP/Contents/Frameworks" -name "*.app" -print \
+            | awk '{ print length, $0 }' | sort -rn | cut -d' ' -f2- \
+            | while IFS= read -r f; do
+                codesign --sign - --force "$f" 2>/dev/null || true
+              done
+
+          # e) Main executable
           codesign --sign - --force "$APP/Contents/MacOS/Histora" 2>/dev/null || true
 
-          # e) Fix ElectronAsarIntegrity — Electron 33+ validates asar SHA256 on launch
+          # f) Fix ElectronAsarIntegrity — Electron 33+ validates asar SHA256 on launch
           echo "→ Updating ASAR integrity hash"
           ASAR_HASH=$(shasum -a 256 "$ASAR" | awk '{print $1}')
           python3 -c "
@@ -99,10 +116,12 @@ jobs:
           print('  hash:', '$ASAR_HASH'[:16] + '...')
           "
 
-          # f) Top-level bundle must be signed last
+          # g) Top-level bundle must be signed last
           codesign --sign - --force "$APP" 2>/dev/null || true
 
-          echo "→ Verifying EF signature flags"
+          # ── Verify the FULL chain before packaging (fail the build if broken) ──
+          echo "→ Verifying signature integrity"
+          codesign --verify --deep --verbose=2 "$APP" 2>&1 | tail -3
           codesign -dv "$APP/Contents/Frameworks/Electron Framework.framework" 2>&1 | grep flags || true
 
           # ── 4. Repack DMG: copy volume contents + swap in re-signed app ────────
