@@ -1,6 +1,6 @@
 {
   "name": "histora",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "author": "Jet",
@@ -53,8 +53,16 @@
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSDocumentsFolderUsageDescription": "Histora 需要访问文档文件夹以同步 Codex 和 Claude Code 的对话记录。 / Histora needs access to the Documents folder to sync conversation logs from Codex and Claude Code.",
+        "NSDownloadsFolderUsageDescription": "Histora 需要访问下载文件夹以读取导出的会话文件。 / Histora needs access to the Downloads folder to read exported session files.",
+        "NSDesktopFolderUsageDescription": "Histora 需要访问桌面文件夹以读取项目相关的会话。 / Histora needs access to the Desktop folder to read project-related sessions.",
+        "NSHomeKitUsageDescription": "Histora 需要访问用户根目录下的隐藏配置文件以识别 AI 代理设置。 / Histora needs access to hidden configuration files in the user home directory to identify AI agent settings."
+      },
       "target": [
         "dmg",
         "zip"

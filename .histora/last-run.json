@@ -1,9 +1,9 @@
 {
-  "startedAt": "2026-06-10T07:30:51.211Z",
-  "finishedAt": "2026-06-10T07:30:56.901Z",
+  "startedAt": "2026-06-18T14:45:28.966Z",
+  "finishedAt": "2026-06-18T14:45:34.412Z",
   "status": "ok",
   "summary": {
-    "startedAt": "2026-06-10T07:30:51.211Z",
+    "startedAt": "2026-06-18T14:45:28.966Z",
     "channels": [
       {
         "id": "codex",
@@ -11,10 +11,10 @@
         "enabled": true,
         "adapter": "codex-jsonl",
         "source": "~/.codex/sessions",
-        "discovered": 39,
+        "discovered": 44,
         "created": 0,
         "updated": 0,
-        "skipped": 39,
+        "skipped": 44,
         "failed": 0,
         "errors": [],
         "status": "ok"
@@ -25,10 +25,10 @@
         "enabled": true,
         "adapter": "claude-jsonl",
         "source": "~/.claude/projects",
-        "discovered": 22,
+        "discovered": 23,
         "created": 0,
         "updated": 0,
-        "skipped": 22,
+        "skipped": 23,
         "failed": 0,
         "errors": [],
         "status": "ok"
@@ -95,10 +95,10 @@
       }
     ],
     "totals": {
-      "discovered": 104,
+      "discovered": 110,
       "created": 0,
       "updated": 0,
-      "skipped": 104,
+      "skipped": 110,
       "failed": 0
     }
   }
